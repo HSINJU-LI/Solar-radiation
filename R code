@@ -1,0 +1,119 @@
+setwd("C:/Users")
+satellite_t<-read.csv("satelliteIndex2018.csv") #clearness index for each day
+colnames(satellite_t)<-c("Y","m","d","all_sky","Clearness")
+satellite_t[satellite_t$Clearness<0,]<-0.7 #default extreme value to 0.7(clear)
+
+satellite_t2019<-read.csv("satelliteIndex2019.csv")
+colnames(satellite_t2019)<-c("Y","m","d","all_sky","Clearness")
+
+UTC<-8
+Std_long<-UTC*180/12
+#J<-164  #Day of year
+s0<-1367 #solar contant
+P_MC<-88.86
+P_9K<-85.06
+P_14.5K<-83.25
+P_30K<-81.4
+#t<-0.7 #transmittance, clear=0.7, cloudy=0.4
+time<-seq(0,24,1/30)
+time<-time[1:720]
+
+library("devtools")
+devtools::install_github("hoxo-m/magicfor")
+library(magicfor)               # load library
+magic_for(print, silent = TRUE) # call magic_for()
+
+m<-m_MC  #optical air mass
+P<-P_MC
+lat<-24.65
+long<-121.47
+
+m<-m_9K  #optical air mass
+P<-P_9K
+lat<-24.6
+long<-121.45
+
+m<-m_14.5K  #optical air mass
+P<-P_14.5K
+lat<-24.59 
+long<-121.41 
+
+m<-m_30K  #optical air mass
+P<-P_30K
+lat<-24.53
+long<-121.4
+
+
+#2018
+for (J in 1:365) {
+  delta<-asin(0.39785*sin((278.97+0.9856*J+1.9165*sin((356.6+0.9856*J)*pi/180))*pi/180))*180/pi #return degree
+  f<-(279.575+0.9856*J)*pi/180 #for compute t0
+  ET<-(-104.7*sin(f)+596.2*sin(2*f)+4.3*sin(3*f)-12.7*sin(4*f)-429.3*cos(f)-2*cos(2*f)+19.3*cos(3*f))/3600 #for compute t0
+  t0<-12-((long-Std_long)/15)-ET   #time of solar noon, correct by orbit 
+  a1<-360*(J/365)*pi/180  #for compute exact TOA Radiation 
+  a2<-1.00011 + 0.034221 * cos(a1) + 0.00128 * sin(a1) + 0.000719 * cos(2*a1) + 0.000077 * sin(2*a1) #for compute exact TOA Radiation 
+  R_top<-s0*a2 
+  h<-(time-t0)*15 #solar hour angle
+  cosZ<-sin(lat*pi/180)*sin(delta*pi/180)+cos(lat*pi/180)*cos(delta*pi/180)*cos(h*pi/180)
+  m<-pmax(P/101.3/cosZ,0)
+  direct<-pmax(R_top*satellite_t$Clearness[J]^m*cosZ,0)
+  diff<-0.3*R_top*(1-satellite_t$Clearness[J]^m)*cosZ
+  surfaceR<-direct+diff
+  R_raw<-pmax(R_top*cosZ,0) #without atmosphere correction
+  print(surfaceR,R_raw)
+}
+R_MC_2018<-magic_result_as_dataframe() 
+R_9K_2018<-magic_result_as_dataframe() 
+R_14.5K_2018<-magic_result_as_dataframe()  
+R_30K_2018<-magic_result_as_dataframe()  
+
+estimated_R_2018<-cbind(R_MC_2018$surfaceR,R_9K_2018$surfaceR,R_14.5K_2018$surfaceR,R_30K_2018$surfaceR)
+colnames(estimated_R_2018)<-c("MC","X9K","X14.5K","X30K")
+t1<-seq.POSIXt(as.POSIXct('2018-01-01 00:00'), as.POSIXct('2018-12-31 23:58'), by = "2 min")
+estimated_R_2018_ts<-xts(x = estimated_R_2018, order.by = t1) 
+estimated_Rraw_2018<-cbind(R_MC_2018$R_raw,R_9K_2018$R_raw,R_14.5K_2018$R_raw,R_30K_2018$R_raw)
+colnames(estimated_Rraw_2018)<-c("MC_raw","X9K_raw","X14.5K_raw","X30K_raw")
+t1<-seq.POSIXt(as.POSIXct('2018-01-01 00:00'), as.POSIXct('2018-12-31 23:58'), by = "2 min")
+estimated_Rraw_2018_ts<-xts(x = estimated_Rraw_2018, order.by = t1) 
+
+#2019
+for (J in 1:196) {
+  delta<-asin(0.39785*sin((278.97+0.9856*J+1.9165*sin((356.6+0.9856*J)*pi/180))*pi/180))*180/pi #return degree
+  f<-(279.575+0.9856*J)*pi/180 #for compute t0
+  ET<-(-104.7*sin(f)+596.2*sin(2*f)+4.3*sin(3*f)-12.7*sin(4*f)-429.3*cos(f)-2*cos(2*f)+19.3*cos(3*f))/3600 #for compute t0
+  t0<-12-((long-Std_long)/15)-ET   #time of solar noon, correct by orbit 
+  a1<-360*(J/365)*pi/180  #for compute exact TOA Radiation 
+  a2<-1.00011 + 0.034221 * cos(a1) + 0.00128 * sin(a1) + 0.000719 * cos(2*a1) + 0.000077 * sin(2*a1) #for compute exact TOA Radiation 
+  R_top<-s0*a2 
+  h<-(time-t0)*15 #solar hour angle
+  cosZ<-sin(lat*pi/180)*sin(delta*pi/180)+cos(lat*pi/180)*cos(delta*pi/180)*cos(h*pi/180)
+  m<-pmax(P/101.3/cosZ,0)
+  direct<-pmax(R_top*satellite_t2019$Clearness[J]^m*cosZ,0)
+  diff<-0.3*R_top*(1-satellite_t2019$Clearness[J]^m)*cosZ
+  surfaceR<-direct+diff
+  R_raw<-pmax(R_top*cosZ,0) #without atmosphere correction
+  print(surfaceR,R_raw)
+}
+R_MC_2019<-magic_result_as_dataframe() 
+R_9K_2019<-magic_result_as_dataframe() 
+R_14.5K_2019<-magic_result_as_dataframe()  
+R_30K_2019<-magic_result_as_dataframe()  
+
+estimated_R_2019<-cbind(R_MC_2019$surfaceR,R_9K_2019$surfaceR,R_14.5K_2019$surfaceR,R_30K_2019$surfaceR)
+colnames(estimated_R_2019)<-c("MC","X9K","X14.5K","X30K")
+t1<-seq.POSIXt(as.POSIXct('2019-01-01 00:00'), as.POSIXct('2019-07-15 23:58'), by = "2 min")
+estimated_R_2019_ts<-xts(x = estimated_R_2019, order.by = t1) 
+estimated_Rraw_2019<-cbind(R_MC_2019$R_raw,R_9K_2019$R_raw,R_14.5K_2019$R_raw,R_30K_2019$R_raw)
+colnames(estimated_Rraw_2019)<-c("MC_raw","X9K_raw","X14.5K_raw","X30K_raw")
+t1<-seq.POSIXt(as.POSIXct('2019-01-01 00:00'), as.POSIXct('2019-07-15 23:58'), by = "2 min")
+estimated_Rraw_2019_ts<-xts(x = estimated_Rraw_2019, order.by = t1) 
+
+#combine 2018 and 2019
+estimated_R_ts<-rbind(estimated_R_2018_ts,estimated_R_2019_ts) 
+estimated_Rraw_ts<-rbind(estimated_Rraw_2018_ts,estimated_Rraw_2019_ts) 
+
+#output parameter
+save(estimated_R_ts, file = "estimated_R_ts.RData")
+load("estimated_R_ts.RData")
+save(estimated_Rraw_ts, file = "estimated_Rraw_ts.RData")
+load("estimated_Rraw_ts.RData")
