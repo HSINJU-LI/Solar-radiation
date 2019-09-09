@@ -1,57 +1,22 @@
-# History files
-.Rhistory
-.Rapp.history
 
-# Session Data files
-.RData
-
-# Example code in package build process
-*-Ex.R
-
-# Output files from R CMD build
-/*.tar.gz
-
-# Output files from R CMD check
-/*.Rcheck/
-
-# RStudio files
-.Rproj.user/
-
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
-
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
-
-# knitr and R markdown default cache directories
-/*_cache/
-/cache/
-
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
-
-# Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
-rsconnect/
-
-setwd("C:/Users")
+setwd("C:/Users")  #set working directory
+#input clearness index data as transmittance
 satellite_t<-read.csv("satelliteIndex2018.csv") #clearness index for each day
 colnames(satellite_t)<-c("Y","m","d","all_sky","Clearness")
 satellite_t[satellite_t$Clearness<0,]<-0.7 #default extreme value to 0.7(clear)
-
 satellite_t2019<-read.csv("satelliteIndex2019.csv")
 colnames(satellite_t2019)<-c("Y","m","d","all_sky","Clearness")
 
+#user input
 UTC<-8
 Std_long<-UTC*180/12
-#J<-164  #Day of year
-s0<-1367 #solar contant
+s0<-1367 #solar contsant
+#in-situ pressure value(mean of 2018)
 P_MC<-88.86
 P_9K<-85.06
 P_14.5K<-83.25
 P_30K<-81.4
-#t<-0.7 #transmittance, clear=0.7, cloudy=0.4
+
 time<-seq(0,24,1/30)
 time<-time[1:720]
 
