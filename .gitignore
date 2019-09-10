@@ -1,6 +1,8 @@
 
 setwd("C:/Users")  #set working directory
 #input clearness index data as transmittance
+# download from https://power.larc.nasa.gov/data-access-viewer/
+# These data were obtained from the NASA Langley Research Center (LaRC) POWER Project funded through the NASA Earth Science/Applied Science Program
 satellite_t<-read.csv("satelliteIndex2018.csv") #clearness index for each day
 colnames(satellite_t)<-c("Y","m","d","all_sky","Clearness")
 satellite_t[satellite_t$Clearness<0,]<-0.7 #default extreme value to 0.7(clear)
