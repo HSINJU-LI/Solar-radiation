@@ -116,6 +116,10 @@ estimated_Rraw_2019_ts<-xts(x = estimated_Rraw_2019, order.by = t1)
 estimated_R_ts<-rbind(estimated_R_2018_ts,estimated_R_2019_ts) 
 estimated_Rraw_ts<-rbind(estimated_Rraw_2018_ts,estimated_Rraw_2019_ts) 
 
+#convert Solar irradiance (W/m2) to PAR (μmol/m2s)
+estimated_R_ts<-estimated_R_ts*2.114
+estimated_Rraw_ts<-estimated_Rraw_ts*2.114
+
 #output parameter
 save(estimated_R_ts, file = "estimated_R_ts.RData")
 load("estimated_R_ts.RData")
